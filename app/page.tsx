@@ -5,34 +5,34 @@ import Image from "next/image";
 export default function Home() {
   return (
     <main className="relative min-h-screen text-emerald-50 overflow-hidden">
-      {/* Banner de fundo */}
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/img/banner.png"
-          alt="Cocos frescos e garrafas de água de coco"
-          fill
-          className="object-cover object-center"
-          priority
-          sizes="100vw"
-        />
-        {/* Gradiente para contraste */}
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-900/70 via-emerald-800/40 to-emerald-900/60" />
+      {/* Background com cor que combina com coco */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-amber-50 via-emerald-100 to-teal-200">
+        {/* Padrão decorativo */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `radial-gradient(circle at 20% 50%, rgba(52, 211, 153, 0.4) 0%, transparent 50%),
+                           radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.4) 0%, transparent 50%),
+                           radial-gradient(circle at 40% 20%, rgba(16, 185, 129, 0.3) 0%, transparent 50%)`
+        }} />
       </div>
 
       {/* Conteúdo principal */}
       <section className="relative container mx-auto px-6 sm:px-8 py-24 flex flex-col items-center text-center">
-        {/* Imagem da logo personalizada */}
-        <div className="relative w-96 h-56 sm:w-[500px] sm:h-[280px] drop-shadow-[0_0_15px_rgba(0,0,0,0.3)]">
-          <Image
-            src="/img/logo.png" // 👈 salve sua imagem como /public/img/logo-coqueiro.png
-            alt="Logo O Coqueiro Belém"
-            fill
-            className="object-contain"
-            priority
-          />
+        {/* Logo dentro de um círculo */}
+        <div className="relative w-64 h-64 sm:w-80 sm:h-80 mb-8">
+          <div className="absolute inset-0 rounded-full bg-white shadow-2xl overflow-hidden border-8">
+            <Image
+              src="/img/logo2.jpeg"
+              alt="Logo O Coqueiro Belém"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+          {/* Brilho decorativo */}
+          <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-emerald-400/20 to-amber-400/20 blur-xl -z-10" />
         </div>
 
-        <p className="mt-6 text-base sm:text-lg text-emerald-100 max-w-2xl leading-relaxed px-2">
+        <p className="mt-6 text-base sm:text-lg text-emerald-800 font-medium max-w-2xl leading-relaxed px-2 drop-shadow-sm">
           Refrescância natural e sabor do Pará! Distribuímos água de coco e derivados
           com qualidade, frescor e amor pela natureza.
         </p>
@@ -49,7 +49,7 @@ export default function Home() {
 
       {/* Benefícios */}
       <section className="relative container mx-auto px-6 sm:px-8 pb-20">
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-10 shadow-xl">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-10 shadow-xl border border-emerald-200">
           <h2 className="text-2xl font-bold text-center text-emerald-900 mb-10">
             Por que escolher O Coqueiro Belém?
           </h2>
@@ -74,13 +74,13 @@ export default function Home() {
             ].map((item, i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-emerald-100 text-center hover:shadow-lg hover:scale-[1.02] transition-transform"
+                className="bg-white/30 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-sm border border-emerald-200/30 text-center"
               >
-                <div className="text-4xl mb-3">{item.icon}</div>
-                <h3 className="font-bold text-emerald-800 text-lg mb-1">
+                <div className="text-4xl mb-3 opacity-70">{item.icon}</div>
+                <h3 className="font-bold text-emerald-900 text-lg mb-1">
                   {item.title}
                 </h3>
-                <p className="text-emerald-700 text-sm sm:text-base">
+                <p className="text-emerald-800 text-sm sm:text-base">
                   {item.desc}
                 </p>
               </div>

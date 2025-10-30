@@ -1,9 +1,20 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Home, ShoppingCart, CheckCircle2, Leaf } from "lucide-react";
-import { products, categorias, type Product } from "@/lib/products";
+import { Home, ShoppingCart, CheckCircle2, Leaf, Package, Menu, X } from "lucide-react";
+
+// Produtos (adaptados para água de coco)
+const products = [
+  // Varejo
+  { id: 1, nome: "Água de Coco 300ml", categoria: "Água de Coco", tipo: "varejo", descricao: "Garrafinha individual", preco: 5.00, imagem: "/img/agua-300ml.jpg" },
+  { id: 3, nome: "Água de Coco 1L", categoria: "Água de Coco", tipo: "varejo", descricao: "Garrafa grande", preco: 15.00, imagem: "/img/agua-1l.jpg" },
+  { id: 4, nome: "Coco Verde Inteiro", categoria: "Coco Fresco", tipo: "varejo", descricao: "Coco fresco para consumo", preco: 6.00, imagem: "/img/coco-inteiro.jpg" },
+// Atacado
+  { id: 101, nome: "Coco Verde (50un)", categoria: "Coco Fresco", tipo: "atacado", descricao: "Coco Verde 50 unidades", preco: 150.00, imagem: "/img/caixa-300ml.jpg" },
+  { id: 102, nome: "Caixa Água de Coco 300ml (12un)", categoria: "Água de Coco", tipo: "atacado", descricao: "Caixa com 12 unidades", preco: 60.00, imagem: "/img/caixa-500ml.jpg" },
+  { id: 103, nome: "Caixa Água de Coco 1L (6un)", categoria: "Água de Coco", tipo: "atacado", descricao: "Caixa com 6 unidades", preco: 90.00, imagem: "/img/caixa-1l.jpg" },
+];
+
+const categorias = Array.from(new Set(products.map(p => p.categoria)));
 
 interface CartItem {
   id: number;
@@ -16,8 +27,10 @@ interface CartItem {
 
 export default function ProdutosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [tipoVenda, setTipoVenda] = useState<"varejo" | "atacado">("varejo");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
   const [recentlyAdded, setRecentlyAdded] = useState<number | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // carregar carrinho
   useEffect(() => {
@@ -35,11 +48,14 @@ export default function ProdutosPage() {
   const categoriasComTodos = ["Todos", ...categorias];
 
   const produtosFiltrados = useMemo(() => {
-    if (categoriaSelecionada === "Todos") return products;
-    return products.filter((p) => p.categoria === categoriaSelecionada);
-  }, [categoriaSelecionada]);
+    let filtered = products.filter(p => p.tipo === tipoVenda);
+    if (categoriaSelecionada !== "Todos") {
+      filtered = filtered.filter(p => p.categoria === categoriaSelecionada);
+    }
+    return filtered;
+  }, [categoriaSelecionada, tipoVenda]);
 
-  const adicionarAoCarrinho = (produto: Product) => {
+  const adicionarAoCarrinho = (produto: typeof products[0]) => {
     setCart((prev) => {
       const existente = prev.find((i) => i.id === produto.id);
       if (existente) {
@@ -67,42 +83,124 @@ export default function ProdutosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-emerald-50 to-white">
-      {/* Cabeçalho */}
-      <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-emerald-100 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-b from-white via-emerald-50 to-white pb-20 md:pb-0">
+      {/* Cabeçalho Desktop */}
+      <header className="hidden md:block sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-emerald-100 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link
+          <a
             href="/"
             className="flex items-center gap-2 text-emerald-700 hover:text-emerald-900 transition-colors"
           >
             <Home size={18} />
             Início
-          </Link>
+          </a>
 
-          <h1 className="font-bold text-emerald-900 text-lg sm:text-xl flex items-center gap-2">
+          <h1 className="font-bold text-emerald-900 text-xl flex items-center gap-2">
             <Leaf size={20} className="text-emerald-600" />
-            Cardápio Natural
+            Produtos O Coqueiro
           </h1>
 
-          <Link href="/pedidos" className="relative text-emerald-700">
-            <ShoppingCart />
+          <a href="/pedidos" className="relative text-emerald-700 hover:text-emerald-900 transition-colors">
+            <ShoppingCart size={24} />
             {cart.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-emerald-600 text-white text-xs rounded-full w-5 h-5 grid place-items-center">
+              <span className="absolute -top-2 -right-2 bg-emerald-600 text-white text-xs rounded-full w-5 h-5 grid place-items-center font-semibold">
                 {cart.length}
               </span>
             )}
-          </Link>
+          </a>
         </div>
       </header>
 
+      {/* Cabeçalho Mobile */}
+      <header className="md:hidden sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-emerald-100 shadow-sm">
+        <div className="px-4 h-14 flex items-center justify-between">
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="text-emerald-700 p-2"
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          <h1 className="font-bold text-emerald-900 text-base flex items-center gap-1">
+            <Leaf size={18} className="text-emerald-600" />
+            O Coqueiro
+          </h1>
+
+          <a href="/pedidos" className="relative text-emerald-700 p-2">
+            <ShoppingCart size={22} />
+            {cart.length > 0 && (
+              <span className="absolute top-0 right-0 bg-emerald-600 text-white text-xs rounded-full w-5 h-5 grid place-items-center font-semibold">
+                {cart.length}
+              </span>
+            )}
+          </a>
+        </div>
+
+        {/* Menu Mobile Dropdown */}
+        {menuOpen && (
+          <div className="bg-white border-t border-emerald-100 shadow-lg">
+            <a
+              href="/"
+              className="flex items-center gap-3 px-4 py-3 text-emerald-700 hover:bg-emerald-50 transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              <Home size={18} />
+              Página Inicial
+            </a>
+            <a
+              href="/pedidos"
+              className="flex items-center gap-3 px-4 py-3 text-emerald-700 hover:bg-emerald-50 transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              <ShoppingCart size={18} />
+              Meu Carrinho ({cart.length})
+            </a>
+          </div>
+        )}
+      </header>
+
+      {/* Toggle Varejo/Atacado */}
+      <div className="container mx-auto px-4 pt-6 pb-4">
+        <div className="bg-white rounded-xl p-2 shadow-sm border border-emerald-100 flex gap-2 max-w-md mx-auto">
+          <button
+            onClick={() => {
+              setTipoVenda("varejo");
+              setCategoriaSelecionada("Todos");
+            }}
+            className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+              tipoVenda === "varejo"
+                ? "bg-emerald-600 text-white shadow-md"
+                : "bg-white text-emerald-700 hover:bg-emerald-50"
+            }`}
+          >
+            <ShoppingCart size={18} />
+            Varejo
+          </button>
+          <button
+            onClick={() => {
+              setTipoVenda("atacado");
+              setCategoriaSelecionada("Todos");
+            }}
+            className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+              tipoVenda === "atacado"
+                ? "bg-emerald-600 text-white shadow-md"
+                : "bg-white text-emerald-700 hover:bg-emerald-50"
+            }`}
+          >
+            <Package size={18} />
+            Atacado
+          </button>
+        </div>
+      </div>
+
       {/* Filtro de categorias */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-wrap justify-center gap-3">
+      <div className="container mx-auto px-4 pb-6">
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3">
           {categoriasComTodos.map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoriaSelecionada(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+              className={`px-3 md:px-4 py-2 rounded-full text-xs md:text-sm font-medium border transition-all ${
                 categoriaSelecionada === cat
                   ? "bg-emerald-600 text-white border-emerald-600"
                   : "bg-white text-emerald-800 border-emerald-200 hover:border-emerald-400"
@@ -114,8 +212,22 @@ export default function ProdutosPage() {
         </div>
       </div>
 
+      {/* Indicador de Seção */}
+      <div className="container mx-auto px-4 pb-4">
+        <div className="text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-emerald-900">
+            {tipoVenda === "varejo" ? "🛒 Compra Individual" : "📦 Compra no Atacado"}
+          </h2>
+          <p className="text-sm text-emerald-600 mt-1">
+            {tipoVenda === "varejo" 
+              ? "Perfeito para consumo pessoal e pequenas quantidades"
+              : "Preços especiais para revendedores e grandes volumes"}
+          </p>
+        </div>
+      </div>
+
       {/* Vitrine */}
-      <main className="container mx-auto px-4 pb-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <main className="container mx-auto px-4 pb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {produtosFiltrados.map((p) => (
           <div
             key={p.id}
@@ -125,28 +237,22 @@ export default function ProdutosPage() {
                 : "hover:shadow-md hover:-translate-y-1"
             }`}
           >
-            <div className="relative w-full h-48 bg-emerald-50">
-              <Image
-                src={p.imagem}
-                alt={p.nome}
-                fill
-                className="object-contain p-3"
-                sizes="(max-width:768px) 100vw, (max-width:1280px) 33vw, 400px"
-              />
+            <div className="relative w-full h-40 md:h-48 bg-emerald-50 flex items-center justify-center">
+              <Leaf className="text-emerald-200" size={64} />
             </div>
-            <div className="flex flex-col flex-1 p-5">
-              <h2 className="text-emerald-900 font-semibold text-lg mb-1">
+            <div className="flex flex-col flex-1 p-4 md:p-5">
+              <h2 className="text-emerald-900 font-semibold text-base md:text-lg mb-1">
                 {p.nome}
               </h2>
-              <p className="text-sm text-black flex-1">{p.descricao}</p>
+              <p className="text-xs md:text-sm text-emerald-600 flex-1">{p.descricao}</p>
 
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-lg font-bold text-emerald-800">
+              <div className="flex items-center justify-between mt-3 md:mt-4">
+                <span className="text-lg md:text-xl font-bold text-emerald-800">
                   R$ {p.preco.toFixed(2)}
                 </span>
                 <button
                   onClick={() => adicionarAoCarrinho(p)}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  className={`px-3 md:px-4 py-2 rounded-lg font-medium text-xs md:text-sm transition-all duration-200 ${
                     recentlyAdded === p.id
                       ? "bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center gap-1"
                       : "bg-emerald-600 text-white hover:bg-emerald-700 shadow"
@@ -154,7 +260,7 @@ export default function ProdutosPage() {
                 >
                   {recentlyAdded === p.id ? (
                     <>
-                      <CheckCircle2 size={16} /> Adicionado
+                      <CheckCircle2 size={16} /> OK
                     </>
                   ) : (
                     "Adicionar"
@@ -166,7 +272,22 @@ export default function ProdutosPage() {
         ))}
       </main>
 
-      {/* animação customizada */}
+      {/* Botão Flutuante Mobile - Carrinho */}
+      <div className="md:hidden fixed bottom-4 right-4 z-30">
+        <a
+          href="/pedidos"
+          className="bg-emerald-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-emerald-700 transition-colors relative"
+        >
+          <ShoppingCart size={24} />
+          {cart.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 grid place-items-center font-bold">
+              {cart.length}
+            </span>
+          )}
+        </a>
+      </div>
+
+      {/* Animação customizada */}
       <style jsx global>{`
         @keyframes pop {
           0% {

@@ -1,110 +1,377 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Home, ArrowLeft, MapPin, Calendar, ChevronRight } from "lucide-react";
+import { Home, ArrowLeft, MapPin, Calendar, ChevronRight, Store } from "lucide-react";
 
-interface Item { id:number; nome:string; preco:number; quantidade:number; }
-interface Localizacao { latitude:number; longitude:number; }
+interface Item { 
+  id: number; 
+  nome: string; 
+  preco: number; 
+  quantidade: number; 
+}
+
+interface Localizacao { 
+  latitude: number; 
+  longitude: number; 
+}
+
 type Metodo = "pix" | "dinheiro" | "cartão";
+type TipoEntrega = "Belém" | "Ananindeua" | "Outras" | "Retirada no Local";
 
 export default function Checkout() {
-  const [items,setItems]=useState<Item[]>([]);
-  const [regiao,setRegiao]=useState("");
-  const [dados,setDados]=useState({nome:"",telefone:"",endereco:"",observacoes:""});
-  const [loc,setLoc]=useState<Localizacao|null>(null);
-  const [metodo,setMetodo]=useState<Metodo>("pix");
-  const [pedido,setPedido]=useState("");
-  const [agendar,setAgendar]=useState(false);
-  const [dataAgendada,setDataAgendada]=useState("");
-  const [horaAgendada,setHoraAgendada]=useState("");
-  const [diasSelecionados,setDiasSelecionados]=useState<string[]>([]);
-  const diasSemana=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
-  const taxas=useMemo(()=>({"Belém":12,"Ananindeua":14,"Outras":20}),[]);
-  const taxa=regiao?(taxas as any)[regiao]??0:0;
-  const subtotal=items.reduce((t,i)=>t+i.preco*i.quantidade,0);
-  const total=subtotal+taxa;
-  const chavePix="ocoqueirobelem@exemplo.com";
-  const telEmpresa="+5591982690087";
+  const [items, setItems] = useState<Item[]>([]);
+  const [regiao, setRegiao] = useState<TipoEntrega | "">("");
+  const [dados, setDados] = useState({
+    nome: "",
+    telefone: "",
+    endereco: "",
+    observacoes: ""
+  });
+  const [loc, setLoc] = useState<Localizacao | null>(null);
+  const [metodo, setMetodo] = useState<Metodo>("pix");
+  const [pedido, setPedido] = useState("");
+  const [agendar, setAgendar] = useState(false);
+  const [dataAgendada, setDataAgendada] = useState("");
+  const [horaAgendada, setHoraAgendada] = useState("");
+  const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
+  
+  const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+  
+  const taxas = useMemo(() => ({
+    "Belém": 12,
+    "Ananindeua": 14,
+    "Outras": 20,
+    "Retirada no Local": 0
+  }), []);
+  
+  const taxa = regiao ? taxas[regiao as TipoEntrega] ?? 0 : 0;
+  const subtotal = items.reduce((t, i) => t + i.preco * i.quantidade, 0);
+  const total = subtotal + taxa;
+  const chavePix = "ocoqueirobelem@exemplo.com";
+  const telEmpresa = "5591982690087"; // Removido o + para funcionar melhor
 
-  useEffect(()=>{
-    const saved=localStorage.getItem("carrinho");
-    setItems(saved?JSON.parse(saved):[]);
-    setPedido(String(Math.floor(10000+Math.random()*90000)));
-  },[]);
-
-  const geo=()=>navigator.geolocation.getCurrentPosition(pos=>setLoc({latitude:pos.coords.latitude,longitude:pos.coords.longitude}));
-  const toggleDia=(d:string)=>setDiasSelecionados(prev=>prev.includes(d)?prev.filter(x=>x!==d):[...prev,d]);
-
-  const enviar=()=>{
-    if(!dados.nome||!dados.telefone||!dados.endereco||!regiao){alert("Preencha nome, telefone, endereço e região");return;}
-    if(horaAgendada){
-      const [h]=horaAgendada.split(":").map(Number);
-      if(h<8||h>18){alert("Horário permitido apenas entre 08:00 e 18:00.");return;}
+  useEffect(() => {
+    const saved = localStorage.getItem("carrinho");
+    if (saved) {
+      try {
+        setItems(JSON.parse(saved));
+      } catch (error) {
+        console.error("Erro ao carregar carrinho:", error);
+        setItems([]);
+      }
     }
-    let msg=`*Pedido — O COQUEIRO BELÉM*%0A*Nº:* #${pedido}%0A*Cliente:* ${dados.nome}%0A*Tel:* ${dados.telefone}%0A*Endereço:* ${dados.endereco}%0A*Região:* ${regiao}%0A`;
-    if(agendar){
-      if(dataAgendada) msg+=`*Agendado:* ${new Date(dataAgendada).toLocaleDateString()} ${horaAgendada?`às ${horaAgendada}`:""}%0A`;
-      if(diasSelecionados.length) msg+=`*Repetir:* ${diasSelecionados.join(", ")}%0A`;
+    setPedido(String(Math.floor(10000 + Math.random() * 90000)));
+  }, []);
+
+  const geo = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => setLoc({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude
+        }),
+        error => console.error("Erro ao obter localização:", error)
+      );
     }
-    msg+=`%0A*Itens:*%0A`;
-    items.forEach(i=>msg+=`- ${i.nome} x${i.quantidade}: R$ ${(i.preco*i.quantidade).toFixed(2)}%0A`);
-    msg+=`%0A*Subtotal:* R$ ${subtotal.toFixed(2)}%0A*Entrega:* R$ ${taxa.toFixed(2)}%0A*Total:* R$ ${total.toFixed(2)}%0A*Pagamento:* ${metodo.toUpperCase()}%0A`;
-    if(dados.observacoes) msg+=`*Obs:* ${dados.observacoes}%0A`;
-    const link=`https://wa.me/${telEmpresa}?text=${msg}`;
-    window.open(link,"_blank");
   };
+
+  const toggleDia = (d: string) => {
+    setDiasSelecionados(prev =>
+      prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]
+    );
+  };
+
+  const enviar = () => {
+    // Validações
+    if (!dados.nome || !dados.telefone || !regiao) {
+      alert("Preencha nome, telefone e região/tipo de entrega");
+      return;
+    }
+
+    // Se não for retirada, precisa do endereço
+    if (regiao !== "Retirada no Local" && !dados.endereco) {
+      alert("Preencha o endereço de entrega");
+      return;
+    }
+
+    if (horaAgendada) {
+      const [h] = horaAgendada.split(":").map(Number);
+      if (h < 8 || h > 18) {
+        alert("Horário permitido apenas entre 08:00 e 18:00.");
+        return;
+      }
+    }
+
+    // Construir mensagem sem encodeURIComponent dentro da string
+    let mensagemTexto = `*Pedido — O COQUEIRO BELÉM*\n`;
+    mensagemTexto += `*Nº:* #${pedido}\n\n`;
+    
+    mensagemTexto += `*📋 DADOS DO CLIENTE*\n`;
+    mensagemTexto += `*Nome:* ${dados.nome}\n`;
+    mensagemTexto += `*Telefone:* ${dados.telefone}\n`;
+    
+    if (regiao === "Retirada no Local") {
+      mensagemTexto += `*Tipo:* 🏪 RETIRADA NO LOCAL\n`;
+    } else {
+      mensagemTexto += `*Endereço:* ${dados.endereco}\n`;
+      mensagemTexto += `*Região:* ${regiao}\n`;
+    }
+    
+    if (loc) {
+      mensagemTexto += `*Localização:* https://maps.google.com/?q=${loc.latitude},${loc.longitude}\n`;
+    }
+    
+    mensagemTexto += `\n`;
+
+    // Agendamento
+    if (agendar) {
+      mensagemTexto += `*📅 AGENDAMENTO*\n`;
+      if (dataAgendada) {
+        const dataFormatada = new Date(dataAgendada + "T00:00:00").toLocaleDateString("pt-BR");
+        mensagemTexto += `*Data:* ${dataFormatada}`;
+        if (horaAgendada) {
+          mensagemTexto += ` às ${horaAgendada}`;
+        }
+        mensagemTexto += `\n`;
+      }
+      if (diasSelecionados.length) {
+        mensagemTexto += `*Repetir em:* ${diasSelecionados.join(", ")}\n`;
+      }
+      mensagemTexto += `\n`;
+    }
+
+    // Itens do pedido
+    mensagemTexto += `*🛒 ITENS DO PEDIDO*\n`;
+    items.forEach(item => {
+      const totalItem = (item.preco * item.quantidade).toFixed(2);
+      mensagemTexto += `• ${item.nome} x${item.quantidade} - R$ ${totalItem}\n`;
+    });
+    
+    mensagemTexto += `\n`;
+
+    // Valores
+    mensagemTexto += `*💰 VALORES*\n`;
+    mensagemTexto += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
+    if (regiao === "Retirada no Local") {
+      mensagemTexto += `*Entrega:* RETIRADA NO LOCAL (R$ 0,00)\n`;
+    } else {
+      mensagemTexto += `*Entrega:* R$ ${taxa.toFixed(2)}\n`;
+    }
+    mensagemTexto += `*TOTAL:* R$ ${total.toFixed(2)}\n`;
+    mensagemTexto += `\n`;
+
+    // Pagamento
+    mensagemTexto += `*💳 PAGAMENTO*\n`;
+    mensagemTexto += `*Forma:* ${metodo.toUpperCase()}\n`;
+    if (metodo === "pix") {
+      mensagemTexto += `*Chave PIX:* ${chavePix}\n`;
+    }
+    mensagemTexto += `\n`;
+
+    // Observações
+    if (dados.observacoes) {
+      mensagemTexto += `*📝 OBSERVAÇÕES*\n`;
+      mensagemTexto += `${dados.observacoes}\n`;
+    }
+
+    // Codificar a mensagem completa de uma vez
+    const mensagemCodificada = encodeURIComponent(mensagemTexto);
+    const link = `https://wa.me/${telEmpresa}?text=${mensagemCodificada}`;
+    
+    console.log("Mensagem:", mensagemTexto); // Para debug
+    console.log("Link:", link); // Para debug
+    
+    window.open(link, "_blank");
+  };
+
+  const enderecoObrigatorio = regiao !== "Retirada no Local" && regiao !== "";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-white">
       <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-emerald-100 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/pedidos" className="text-emerald-700 flex items-center gap-2"><ArrowLeft size={18}/> Voltar</Link>
+          <Link href="/pedidos" className="text-emerald-700 flex items-center gap-2">
+            <ArrowLeft size={18} /> Voltar
+          </Link>
           <h1 className="font-bold text-emerald-900">Finalizar Pedido</h1>
-          <Link href="/" className="text-emerald-700 flex items-center gap-2"><Home size={18}/> Início</Link>
+          <Link href="/" className="text-emerald-700 flex items-center gap-2">
+            <Home size={18} /> Início
+          </Link>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-10 max-w-2xl space-y-8">
         {/* Resumo */}
         <div className="bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm">
-          <h2 className="font-semibold text-emerald-900 mb-3">Resumo do Pedido</h2>
-          <div className="space-y-2 text-emerald-800">
-            <div className="flex justify-between"><span>Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>
-            <div className="flex justify-between"><span>Entrega</span><span>R$ {taxa.toFixed(2)}</span></div>
-            <div className="border-t mt-2 pt-2 flex justify-between font-semibold"><span>Total</span><span className="text-lg text-emerald-700">R$ {total.toFixed(2)}</span></div>
+          <h2 className="font-semibold text-emerald-900 mb-4 flex items-center gap-2">
+            📋 Resumo do Pedido
+          </h2>
+          
+          {/* Lista de Itens */}
+          <div className="space-y-2 mb-4 border-b pb-4">
+            {items.map(item => (
+              <div key={item.id} className="flex justify-between text-sm text-emerald-800">
+                <span>{item.nome} x{item.quantidade}</span>
+                <span>R$ {(item.preco * item.quantidade).toFixed(2)}</span>
+              </div>
+            ))}
           </div>
+
+          <div className="space-y-2 text-emerald-800">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span>R$ {subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>
+                {regiao === "Retirada no Local" ? "Retirada" : "Entrega"}
+              </span>
+              <span className={regiao === "Retirada no Local" ? "text-green-600 font-medium" : ""}>
+                R$ {taxa.toFixed(2)}
+              </span>
+            </div>
+            <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
+              <span>Total</span>
+              <span className="text-lg text-emerald-700">R$ {total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tipo de Entrega */}
+        <div className="bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm space-y-4">
+          <h2 className="font-semibold text-emerald-900 flex items-center gap-2">
+            🚚 Tipo de Entrega
+          </h2>
+          <select
+            className="w-full border border-emerald-200 rounded-lg p-3 text-emerald-900 font-medium"
+            value={regiao}
+            onChange={e => setRegiao(e.target.value as TipoEntrega | "")}
+          >
+            <option value="">Selecione o tipo de entrega</option>
+            <option value="Retirada no Local">🏪 Retirada no Local (Grátis)</option>
+            <option value="Belém">🚚 Entrega em Belém (R$ 12,00)</option>
+            <option value="Ananindeua">🚚 Entrega em Ananindeua (R$ 14,00)</option>
+            <option value="Outras">🚚 Outras Regiões (R$ 20,00)</option>
+          </select>
+
+          {regiao === "Retirada no Local" && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Store className="text-emerald-600 mt-1" size={20} />
+                <div className="text-sm text-emerald-800">
+                  <p className="font-semibold mb-1">📍 Endereço para Retirada:</p>
+                  <p>Rua Exemplo, 123 - Bairro Centro</p>
+                  <p>Belém - PA</p>
+                  <p className="mt-2 text-emerald-600">
+                    ⏰ Horário: Segunda a Sábado, 8h às 18h
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Dados */}
         <div className="bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm space-y-4">
-          <h2 className="font-semibold text-emerald-900">Seus Dados</h2>
-          <input className="w-full border border-emerald-200 rounded-lg p-3 text-black placeholder-black" placeholder="Nome" value={dados.nome} onChange={e=>setDados({...dados,nome:e.target.value})}/>
-          <input className="w-full border border-emerald-200 rounded-lg p-3 text-black placeholder-black" placeholder="Telefone" value={dados.telefone} onChange={e=>setDados({...dados,telefone:e.target.value})}/>
-          <input className="w-full border border-emerald-200 rounded-lg p-3 text-black placeholder-black" placeholder="Endereço" value={dados.endereco} onChange={e=>setDados({...dados,endereco:e.target.value})}/>
-          <select className="w-full border border-emerald-200 rounded-lg p-3 text-black" value={regiao} onChange={e=>setRegiao(e.target.value)}>
-            <option value="">Região de Entrega</option>
-            <option>Belém</option><option>Ananindeua</option><option>Outras</option>
-          </select>
-          <button onClick={geo} className="px-4 py-2 border border-emerald-200 rounded-lg text-black bg-emerald-50 flex items-center gap-2"><MapPin size={18}/> Usar minha localização</button>
-          <textarea className="w-full border border-emerald-200 rounded-lg p-3 text-black placeholder-black" rows={3} placeholder="Observações" value={dados.observacoes} onChange={e=>setDados({...dados,observacoes:e.target.value})}/>
+          <h2 className="font-semibold text-emerald-900">👤 Seus Dados</h2>
+          
+          <input
+            className="w-full border border-emerald-200 rounded-lg p-3 text-emerald-900 placeholder-emerald-400"
+            placeholder="Nome completo *"
+            value={dados.nome}
+            onChange={e => setDados({ ...dados, nome: e.target.value })}
+          />
+          
+          <input
+            className="w-full border border-emerald-200 rounded-lg p-3 text-emerald-900 placeholder-emerald-400"
+            placeholder="Telefone (WhatsApp) *"
+            value={dados.telefone}
+            onChange={e => setDados({ ...dados, telefone: e.target.value })}
+          />
+          
+          {regiao !== "Retirada no Local" && (
+            <>
+              <input
+                className="w-full border border-emerald-200 rounded-lg p-3 text-emerald-900 placeholder-emerald-400"
+                placeholder={`Endereço completo ${enderecoObrigatorio ? "*" : ""}`}
+                value={dados.endereco}
+                onChange={e => setDados({ ...dados, endereco: e.target.value })}
+              />
+              
+              <button
+                onClick={geo}
+                className="px-4 py-2 border border-emerald-200 rounded-lg text-emerald-700 bg-emerald-50 flex items-center gap-2 hover:bg-emerald-100 transition-colors"
+              >
+                <MapPin size={18} /> Usar minha localização
+              </button>
+              
+              {loc && (
+                <div className="text-xs text-emerald-600 bg-emerald-50 p-2 rounded">
+                  ✓ Localização capturada
+                </div>
+              )}
+            </>
+          )}
+          
+          <textarea
+            className="w-full border border-emerald-200 rounded-lg p-3 text-emerald-900 placeholder-emerald-400"
+            rows={3}
+            placeholder="Observações (opcional)"
+            value={dados.observacoes}
+            onChange={e => setDados({ ...dados, observacoes: e.target.value })}
+          />
         </div>
 
         {/* Agendamento */}
         <div className="bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm space-y-3">
-          <h2 className="font-semibold text-emerald-900 flex items-center gap-2"><Calendar size={18}/> Agendamento</h2>
-          <label className="flex items-center gap-2 text-black">
-            <input type="checkbox" checked={agendar} onChange={e=>setAgendar(e.target.checked)}/> Desejo agendar este pedido
+          <h2 className="font-semibold text-emerald-900 flex items-center gap-2">
+            <Calendar size={18} /> Agendamento
+          </h2>
+          
+          <label className="flex items-center gap-2 text-emerald-800 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agendar}
+              onChange={e => setAgendar(e.target.checked)}
+              className="w-4 h-4 text-emerald-600"
+            />
+            Desejo agendar este pedido
           </label>
+          
           {agendar && (
-            <div className="space-y-3">
+            <div className="space-y-3 mt-4">
               <div className="grid grid-cols-2 gap-3">
-                <input type="date" className="border border-emerald-200 rounded-lg p-3 text-black" value={dataAgendada} onChange={e=>setDataAgendada(e.target.value)}/>
-                <input type="time" min="08:00" max="18:00" className="border border-emerald-200 rounded-lg p-3 text-black" value={horaAgendada} onChange={e=>setHoraAgendada(e.target.value)}/>
+                <input
+                  type="date"
+                  className="border border-emerald-200 rounded-lg p-3 text-emerald-900"
+                  value={dataAgendada}
+                  onChange={e => setDataAgendada(e.target.value)}
+                />
+                <input
+                  type="time"
+                  min="08:00"
+                  max="18:00"
+                  className="border border-emerald-200 rounded-lg p-3 text-emerald-900"
+                  value={horaAgendada}
+                  onChange={e => setHoraAgendada(e.target.value)}
+                />
               </div>
-              <p className="text-sm text-black">Ou selecione dias fixos:</p>
+              
+              <p className="text-sm text-emerald-700">Ou selecione dias fixos da semana:</p>
+              
               <div className="flex flex-wrap gap-2">
-                {diasSemana.map(d=>(
-                  <button key={d} onClick={()=>toggleDia(d)} className={`px-3 py-1 rounded-full border text-sm ${diasSelecionados.includes(d)?"bg-emerald-600 text-white border-emerald-600":"border-emerald-200 text-black"}`}>{d}</button>
+                {diasSemana.map(d => (
+                  <button
+                    key={d}
+                    onClick={() => toggleDia(d)}
+                    className={`px-3 py-1 rounded-full border text-sm transition-colors ${
+                      diasSelecionados.includes(d)
+                        ? "bg-emerald-600 text-white border-emerald-600"
+                        : "border-emerald-200 text-emerald-700 hover:border-emerald-400"
+                    }`}
+                  >
+                    {d}
+                  </button>
                 ))}
               </div>
             </div>
@@ -113,20 +380,39 @@ export default function Checkout() {
 
         {/* Pagamento */}
         <div className="bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm space-y-4">
-          <h2 className="font-semibold text-emerald-900">Forma de Pagamento</h2>
+          <h2 className="font-semibold text-emerald-900">💳 Forma de Pagamento</h2>
+          
           <div className="grid grid-cols-3 gap-2">
-            {(["pix","dinheiro","cartão"] as const).map(m=>(
-              <button key={m} onClick={()=>setMetodo(m)} className={`px-3 py-2 rounded-lg border text-sm font-medium ${metodo===m?"bg-emerald-600 text-white border-emerald-600":"border-emerald-200 text-black"}`}>{m.toUpperCase()}</button>
+            {(["pix", "dinheiro", "cartão"] as const).map(m => (
+              <button
+                key={m}
+                onClick={() => setMetodo(m)}
+                className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  metodo === m
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "border-emerald-200 text-emerald-700 hover:border-emerald-400"
+                }`}
+              >
+                {m.toUpperCase()}
+              </button>
             ))}
           </div>
-          {metodo==="pix"&&(
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-sm text-black">
-              <p><strong>Chave PIX:</strong> {chavePix}</p>
-              <p>Valor: R$ {total.toFixed(2)}</p>
+          
+          {metodo === "pix" && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-sm text-emerald-800">
+              <p className="font-semibold mb-1">Chave PIX:</p>
+              <p className="font-mono bg-white px-2 py-1 rounded">{chavePix}</p>
+              <p className="mt-2">
+                <strong>Valor:</strong> R$ {total.toFixed(2)}
+              </p>
             </div>
           )}
-          <button onClick={enviar} className="w-full mt-2 inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 transition-colors">
-            Enviar pedido pelo WhatsApp <ChevronRight size={18}/>
+          
+          <button
+            onClick={enviar}
+            className="w-full mt-4 inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-emerald-600 text-white font-semibold shadow-lg hover:bg-emerald-700 transition-all hover:scale-[1.02]"
+          >
+            Enviar pedido pelo WhatsApp <ChevronRight size={18} />
           </button>
         </div>
       </main>

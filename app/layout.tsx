@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "O Coqueiro Belém - Água de Coco e Derivados",
   description: "O Coqueiro Belém - Distribuidora de Água de Coco e Derivados do Pará",
+  icons: {
+    icon: '/img/logo1.jpg',
+    shortcut: '/img/logo1.jpg',
+    apple: '/img/logo1.jpg',
+  },
 };
 
 export default function RootLayout({
@@ -23,7 +28,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
+      <head>
+        <link rel="icon" href="/img/logo1.jpg" type="image/jpeg" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

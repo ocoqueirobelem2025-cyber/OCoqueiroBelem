@@ -5,9 +5,9 @@ import { Home, ShoppingCart, CheckCircle2, Leaf, Package, Menu, X } from "lucide
 // Produtos (adaptados para água de coco)
 const products = [
   // Varejo
-  { id: 1, nome: "Água de Coco 300ml", categoria: "Água de Coco", tipo: "varejo", descricao: "Garrafinha individual", preco: 5.00, imagem: "/img/agua-300ml.jpg" },
-  { id: 3, nome: "Água de Coco 1L", categoria: "Água de Coco", tipo: "varejo", descricao: "Garrafa grande", preco: 15.00, imagem: "/img/agua-1l.jpg" },
-  { id: 4, nome: "Coco Verde Inteiro", categoria: "Coco Fresco", tipo: "varejo", descricao: "Coco fresco para consumo", preco: 6.00, imagem: "/img/coco-inteiro.jpg" },
+  { id: 1, nome: "Água de Coco 300ml", categoria: "Água de Coco", tipo: "varejo", descricao: "Garrafinha individual", preco: 5.00, imagem: "/img/300ml.png" },
+  { id: 3, nome: "Água de Coco 1L", categoria: "Água de Coco", tipo: "varejo", descricao: "Garrafa grande", preco: 15.00, imagem: "/img/1litro.png" },
+  { id: 4, nome: "Coco Verde Inteiro", categoria: "Coco Fresco", tipo: "varejo", descricao: "Coco fresco para consumo", preco: 6.00, imagem: "/img/coco-verde.png" },
 // Atacado
   { id: 101, nome: "Coco Verde (50un)", categoria: "Coco Fresco", tipo: "atacado", descricao: "Coco Verde 50 unidades", preco: 150.00, imagem: "/img/caixa-300ml.jpg" },
   { id: 102, nome: "Caixa Água de Coco 300ml (12un)", categoria: "Água de Coco", tipo: "atacado", descricao: "Caixa com 12 unidades", preco: 60.00, imagem: "/img/caixa-500ml.jpg" },
@@ -237,10 +237,33 @@ export default function ProdutosPage() {
                 : "hover:shadow-md hover:-translate-y-1"
             }`}
           >
-            <div className="relative w-full h-40 md:h-48 bg-emerald-50 flex items-center justify-center">
-              <Leaf className="text-emerald-200" size={64} />
+            <div 
+              onClick={() => adicionarAoCarrinho(p)}
+              className="relative w-full h-40 md:h-48 bg-white flex items-center justify-center cursor-pointer hover:bg-emerald-50 transition-colors overflow-hidden"
+            >
+              <img
+                src={p.imagem}
+                alt={p.nome}
+                className="w-full h-full"
+                style={{ objectFit: 'fill' }}
+                onError={(e) => {
+                  // Fallback para ícone se a imagem não carregar
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    const icon = parent.querySelector('.fallback-icon');
+                    if (icon) {
+                      (icon as HTMLElement).style.display = 'block';
+                    }
+                  }
+                }}
+              />
+              <Leaf className="fallback-icon text-emerald-200 absolute" size={64} style={{ display: 'none' }} />
             </div>
-            <div className="flex flex-col flex-1 p-4 md:p-5">
+            <div 
+              onClick={() => adicionarAoCarrinho(p)}
+              className="flex flex-col flex-1 p-4 md:p-5 cursor-pointer"
+            >
               <h2 className="text-emerald-900 font-semibold text-base md:text-lg mb-1">
                 {p.nome}
               </h2>
@@ -251,7 +274,10 @@ export default function ProdutosPage() {
                   R$ {p.preco.toFixed(2)}
                 </span>
                 <button
-                  onClick={() => adicionarAoCarrinho(p)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    adicionarAoCarrinho(p);
+                  }}
                   className={`px-3 md:px-4 py-2 rounded-lg font-medium text-xs md:text-sm transition-all duration-200 ${
                     recentlyAdded === p.id
                       ? "bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center gap-1"

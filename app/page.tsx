@@ -1,6 +1,5 @@
 "use client";
-import Link from "next/link";
-import Image from "next/image";
+import { ShoppingCart } from "lucide-react";
 
 export default function Home() {
   return (
@@ -20,12 +19,10 @@ export default function Home() {
         {/* Logo dentro de um círculo */}
         <div className="relative w-64 h-64 sm:w-80 sm:h-80 mb-8">
           <div className="absolute inset-0 rounded-full bg-white shadow-2xl overflow-hidden border-8">
-            <Image
+            <img
               src="/img/logo2.jpeg"
               alt="Logo O Coqueiro Belém"
-              fill
-              className="object-cover"
-              priority
+              className="w-full h-full object-cover"
             />
           </div>
           {/* Brilho decorativo */}
@@ -38,12 +35,12 @@ export default function Home() {
         </p>
 
         <div className="mt-10">
-          <Link
+          <a
             href="/produtos"
-            className="px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg hover:scale-105 transition-transform"
+            className="px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg hover:scale-105 transition-transform inline-block"
           >
             Ver Produtos
-          </Link>
+          </a>
         </div>
       </section>
 
@@ -86,6 +83,29 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Botão Flutuante Mobile - Ver Produtos */}
+      <div className="md:hidden fixed bottom-4 right-4 z-30">
+        <a
+          href="/produtos"
+          className="bg-emerald-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-emerald-700 transition-colors"
+        >
+          <ShoppingCart size={24} />
+        </a>
+      </div>
+
+      {/* Botão Desktop no Final */}
+      <section className="relative container mx-auto px-6 sm:px-8 pb-16">
+        <div className="text-center">
+          <a
+            href="/produtos"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg hover:scale-105 transition-transform"
+          >
+            <ShoppingCart size={20} />
+            Ver Todos os Produtos
+          </a>
         </div>
       </section>
     </main>

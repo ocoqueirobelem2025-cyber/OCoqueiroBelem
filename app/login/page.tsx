@@ -110,7 +110,7 @@ export default function LoginAdmin() {
                   onKeyPress={handleKeyPress}
                   placeholder="Digite seu usuário"
                   disabled={carregando}
-                  className="w-full pl-10 pr-4 py-3 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-3 text-black border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -131,7 +131,7 @@ export default function LoginAdmin() {
                   onKeyPress={handleKeyPress}
                   placeholder="Digite sua senha"
                   disabled={carregando}
-                  className="w-full pl-10 pr-12 py-3 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full pl-10 pr-12 py-3 text-black border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"

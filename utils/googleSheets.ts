@@ -153,10 +153,13 @@ async function buscarEstoqueDaPlanilha(): Promise<Record<number, boolean>> {
 
 
     // Converter para objeto { id: disponivel }
+    // Converter para objeto { id: disponivel }
     const estoque: Record<number, boolean> = {};
-    produtos.forEach(p => {
+
+    produtos.forEach((p: ProdutoEstoque) => {
       estoque[p.id] = p.disponivel;
     });
+
 
     console.log('[Estoque] ✅ Estoque carregado:', estoque);
     return estoque;

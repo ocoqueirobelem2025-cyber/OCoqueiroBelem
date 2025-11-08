@@ -30,7 +30,7 @@ const ESTOQUE_FALLBACK: Record<number, boolean> = {
   4: true,   // Coco Verde Inteiro
   5: true,   // Coco Gelado (unidade)
   6: true,   // Kit 6 Cocos Verdes
-  
+
   // Atacado
   101: true, // Coco Verde (50un)
   102: true, // Caixa Água de Coco 300ml (12un)
@@ -52,11 +52,11 @@ export function getEstoqueLocal(): Record<number, boolean> {
 function setEstoqueLocal(novoEstoque: Record<number, boolean>) {
   estoqueAtualCache = { ...novoEstoque };
   ultimaAtualizacao = new Date();
-  
+
   // Disparar evento personalizado para atualizar components
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('estoqueAtualizado', { 
-      detail: estoqueAtualCache 
+    window.dispatchEvent(new CustomEvent('estoqueAtualizado', {
+      detail: estoqueAtualCache
     }));
   }
 }
@@ -107,10 +107,10 @@ function parseDisponibilidade(valor: string | undefined): boolean {
   if (!valor || valor === '') {
     return true; // Vazio = disponível por padrão
   }
-  
+
   const valorLower = valor.toLowerCase().trim();
   const indisponivel = ['false', 'não', 'nao', 'no', '0', 'indisponivel', 'indisponível', 'esgotado'];
-  
+
   return !indisponivel.includes(valorLower);
 }
 
@@ -120,45 +120,47 @@ function parseDisponibilidade(valor: string | undefined): boolean {
 async function buscarEstoqueDaPlanilha(): Promise<Record<number, boolean>> {
   try {
     console.log('[Estoque] 🔄 Buscando estoque da planilha...');
-    
+
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_RANGE}?key=${GOOGLE_SHEETS_API_KEY}`;
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
     });
-    
+
     console.log('[Estoque] 📡 Status:', response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[Estoque] ❌ Erro na API:', errorText);
       throw new Error(`API Error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     if (!data.values || data.values.length <= 1) {
       throw new Error('Planilha vazia ou só com cabeçalho');
     }
-    
+
     // Processar produtos
     const [_cabecalho, ...linhas] = data.values;
     console.log(`[Estoque] 📊 ${linhas.length} produtos na planilha`);
-    
+
     const produtos = linhas
-      .map((linha, index) => processarLinhaProduto(linha, index))
-      .filter((p): p is ProdutoEstoque => p !== null);
-    
+      .map((linha: string[], index: number) =>
+        processarLinhaProduto(linha, index)
+      )
+
+
     // Converter para objeto { id: disponivel }
     const estoque: Record<number, boolean> = {};
     produtos.forEach(p => {
       estoque[p.id] = p.disponivel;
     });
-    
+
     console.log('[Estoque] ✅ Estoque carregado:', estoque);
     return estoque;
-    
+
   } catch (err) {
     console.error('[Estoque] 💥 Erro ao buscar planilha:', err);
     throw err;
@@ -175,11 +177,11 @@ export interface UseEstoqueReturn {
   error: string | null;
   lastUpdate: Date | null;
   usingFallback: boolean;
-  
+
   // Funções
   recarregar: () => void;
   isProdutoDisponivel: (id: number) => boolean;
-  
+
   // Status
   apiStatus: 'loading' | 'success' | 'error' | 'fallback';
 }
@@ -199,47 +201,47 @@ export function useEstoque(): UseEstoqueReturn {
       setLoading(true);
       setError(null);
       setUsingFallback(false);
-      
+
       const novoEstoque = await buscarEstoqueDaPlanilha();
-      
+
       // Atualizar cache local
       setEstoqueLocal(novoEstoque);
       setEstoque(novoEstoque);
-      
+
       // Criar lista de produtos para o estado
       const listaProdutos: ProdutoEstoque[] = Object.entries(novoEstoque).map(([id, disponivel]) => ({
         id: parseInt(id),
         nome: `Produto ${id}`,
         disponivel
       }));
-      
+
       setProdutos(listaProdutos);
       setLastUpdate(new Date());
       setLoading(false);
-      
+
       console.log('[Hook] ✅ Estoque atualizado com sucesso!');
-      
+
     } catch (err) {
       console.warn('[Hook] ⚠️ Erro ao carregar, usando fallback local...');
-      
+
       const errorMsg = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(errorMsg);
-      
+
       // Usar fallback
       setEstoqueLocal(ESTOQUE_FALLBACK);
       setEstoque(ESTOQUE_FALLBACK);
-      
+
       const listaProdutos: ProdutoEstoque[] = Object.entries(ESTOQUE_FALLBACK).map(([id, disponivel]) => ({
         id: parseInt(id),
         nome: `Produto ${id}`,
         disponivel
       }));
-      
+
       setProdutos(listaProdutos);
       setUsingFallback(true);
       setLastUpdate(new Date());
       setLoading(false);
-      
+
       console.log('[Hook] 🏠 Usando dados locais');
     }
   }, []);
@@ -267,7 +269,7 @@ export function useEstoque(): UseEstoqueReturn {
   useEffect(() => {
     if (!error && !usingFallback && AUTO_RELOAD_INTERVAL > 0) {
       console.log(`[Hook] ⏰ Auto-reload configurado (${AUTO_RELOAD_INTERVAL / 1000}s)`);
-      
+
       const interval = setInterval(() => {
         console.log('[Hook] 🔄 Auto-reload executando...');
         carregarEstoque();
@@ -281,11 +283,11 @@ export function useEstoque(): UseEstoqueReturn {
   }, [error, usingFallback, carregarEstoque]);
 
   // Status da API
-  const apiStatus: UseEstoqueReturn['apiStatus'] = 
-    usingFallback ? 'fallback' : 
-    error ? 'error' : 
-    loading ? 'loading' : 
-    'success';
+  const apiStatus: UseEstoqueReturn['apiStatus'] =
+    usingFallback ? 'fallback' :
+      error ? 'error' :
+        loading ? 'loading' :
+          'success';
 
   return {
     produtos,
@@ -306,30 +308,30 @@ export function useEstoque(): UseEstoqueReturn {
 export async function testarAPIEstoque() {
   try {
     console.log('🧪 TESTE MANUAL DA API - ESTOQUE');
-    
+
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_RANGE}?key=${GOOGLE_SHEETS_API_KEY}`;
     console.log('🔗 URL:', url);
-    
+
     const response = await fetch(url);
     console.log('📡 Status:', response.status, response.statusText);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Erro:', errorText);
       return { sucesso: false, erro: errorText };
     }
-    
+
     const data = await response.json();
     console.log('✅ Dados recebidos:', data);
     console.log('📊 Linhas:', data.values?.length || 0);
-    
+
     if (data.values && data.values.length > 1) {
       console.log('📋 Cabeçalho:', data.values[0]);
       console.log('📦 Primeiras linhas:', data.values.slice(1, 4));
     }
-    
+
     return { sucesso: true, dados: data };
-    
+
   } catch (err) {
     console.error('💥 Erro na requisição:', err);
     return { sucesso: false, erro: err };
@@ -344,21 +346,21 @@ export async function testarAPIEstoque() {
  * Atualizar disponibilidade de um produto via API
  */
 export async function atualizarDisponibilidade(
-  produtoId: number, 
+  produtoId: number,
   disponivel: boolean
 ): Promise<{ success: boolean; error?: string }> {
   try {
     console.log(`[API] 📤 Atualizando produto ${produtoId} para ${disponivel ? 'disponível' : 'indisponível'}`);
-    
+
     // Mapear ID do produto para linha na planilha
-    const linhaNaPlanilha = produtoId === 1 ? 2 : 
-                           produtoId === 3 ? 3 : 
-                           produtoId === 4 ? 4 : 
-                           produtoId === 5 ? 5 :
-                           produtoId === 6 ? 6 :
-                           produtoId === 101 ? 7 : 
-                           produtoId === 102 ? 8 : 
-                           produtoId === 103 ? 9 : 2;
+    const linhaNaPlanilha = produtoId === 1 ? 2 :
+      produtoId === 3 ? 3 :
+        produtoId === 4 ? 4 :
+          produtoId === 5 ? 5 :
+            produtoId === 6 ? 6 :
+              produtoId === 101 ? 7 :
+                produtoId === 102 ? 8 :
+                  produtoId === 103 ? 9 : 2;
 
     const url = '/api/admin/atualizar-estoque';
     const body = {
@@ -389,9 +391,9 @@ export async function atualizarDisponibilidade(
       console.error('[API] ❌ Resposta é HTML, não JSON - API não encontrada!');
       const htmlText = await response.text();
       console.error('[API] 📄 HTML recebido:', htmlText.substring(0, 200));
-      return { 
-        success: false, 
-        error: 'API não encontrada. Verifique se o arquivo route.ts existe em app/api/admin/atualizar-estoque/' 
+      return {
+        success: false,
+        error: 'API não encontrada. Verifique se o arquivo route.ts existe em app/api/admin/atualizar-estoque/'
       };
     }
 
@@ -402,15 +404,15 @@ export async function atualizarDisponibilidade(
       } catch (e) {
         const textError = await response.text();
         console.error('[API] ❌ Erro ao parsear resposta:', textError);
-        return { 
-          success: false, 
-          error: `HTTP ${response.status}: ${textError}` 
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${textError}`
         };
       }
       console.error('[API] ❌ Erro na resposta:', errorData);
-      return { 
-        success: false, 
-        error: errorData.error || `HTTP ${response.status}` 
+      return {
+        success: false,
+        error: errorData.error || `HTTP ${response.status}`
       };
     }
 
@@ -418,9 +420,9 @@ export async function atualizarDisponibilidade(
     console.log('[API] ✅ Resposta:', data);
 
     if (data.erros > 0) {
-      return { 
-        success: false, 
-        error: `${data.erros} erro(s) ao atualizar` 
+      return {
+        success: false,
+        error: `${data.erros} erro(s) ao atualizar`
       };
     }
 
@@ -433,9 +435,9 @@ export async function atualizarDisponibilidade(
 
   } catch (error) {
     console.error('[API] 💥 Erro ao atualizar:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Erro desconhecido' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
     };
   }
 }
@@ -445,16 +447,16 @@ export async function atualizarDisponibilidade(
  */
 export function broadcastEstoque(estoque: Record<number, boolean>) {
   console.log('[Broadcast] 📡 Transmitindo atualização de estoque');
-  
+
   // Atualizar cache local
   setEstoqueLocal(estoque);
-  
+
   // Disparar evento customizado
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('estoqueAtualizado', { 
-      detail: estoque 
+    window.dispatchEvent(new CustomEvent('estoqueAtualizado', {
+      detail: estoque
     }));
-    
+
     // Também disparar evento de storage para sincronizar entre abas
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'coqueiro_estoque_update',

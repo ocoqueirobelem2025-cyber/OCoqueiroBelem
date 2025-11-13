@@ -52,23 +52,23 @@ export default function Checkout() {
   
   // Números de WhatsApp por região
   const telefonesRegiao = useMemo(() => ({
-    "Belém-Centro": "5591981745677",
-    "Icoaraci/Augusto Montenegro": "5591981745677",
-    "Marco": "5591981745677",
-    "Pedreira": "5591981745677",
-    "Telegrafo": "5591981745677",
-    "Sacramenta": "5591981745677",
-    "Souza": "5591981745677",
-    "Marambaia": "5591981745677",
-    "Retirada no Local": "5591981745677",
-    "Ananideua / Br316": "5591981745677"
+    "Belém-Centro": "559181745677",
+    "Icoaraci/Augusto Montenegro": "559181745677",
+    "Marco": "559181745677",
+    "Pedreira": "559181745677",
+    "Telegrafo": "559181745677",
+    "Sacramenta": "559181745677",
+    "Souza": "559181745677",
+    "Marambaia": "559181745677",
+    "Retirada no Local": "559181745677",
+    "Ananideua / Br316": "559181745677"
   }), []);
   
   const taxa = regiao ? taxas[regiao as TipoEntrega] ?? 0 : 0;
   const subtotal = items.reduce((t, i) => t + i.preco * i.quantidade, 0);
   const total = subtotal + taxa;
   const chavePix = " 91981745677";
-  const telEmpresa = regiao ? telefonesRegiao[regiao as TipoEntrega] : "5591981745677";
+  const telEmpresa = regiao ? telefonesRegiao[regiao as TipoEntrega] : "559181745677";
   const pedidoMinimo = 0;
   const atingiuMinimo = subtotal >= pedidoMinimo;
 

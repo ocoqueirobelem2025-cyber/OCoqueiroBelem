@@ -16,7 +16,7 @@ interface Localizacao {
 }
 
 type Metodo = "pix" | "dinheiro" | "cartão";
-type TipoEntrega = "Belém" | "Ananindeua" | "Outras" | "Retirada no Local";
+type TipoEntrega = "Belém-Centro" | "Icoaraci/Augusto Montenegro" | "Marco" |"Telegrafo"|"Pedreira"|"Sacramenta"|"Souza"|"Marambaia"|"Ananideua / Br316"|"Retirada no Local";
 
 export default function Checkout() {
   const [items, setItems] = useState<Item[]>([]);
@@ -38,26 +38,38 @@ export default function Checkout() {
   const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
   
   const taxas = useMemo(() => ({
-    "Belém": 12,
-    "Ananindeua": 14,
-    "Outras": 20,
+    "Belém-Centro": 0,
+    "Icoaraci/Augusto Montenegro": 15,
+    "Marco": 10,
+    "Pedreira": 10,
+    "Telegrafo": 10,
+    "Sacramenta": 10,
+    "Souza": 10,
+    "Marambaia": 10,
+    "Ananideua / Br316": 20,
     "Retirada no Local": 0
   }), []);
   
   // Números de WhatsApp por região
   const telefonesRegiao = useMemo(() => ({
-    "Belém": "5591982690087",
-    "Ananindeua": "5591982690088",
-    "Outras": "5591982690089",
-    "Retirada no Local": "5591982690087"
+    "Belém-Centro": "5591981745677",
+    "Icoaraci/Augusto Montenegro": "5591981745677",
+    "Marco": "5591981745677",
+    "Pedreira": "5591981745677",
+    "Telegrafo": "5591981745677",
+    "Sacramenta": "5591981745677",
+    "Souza": "5591981745677",
+    "Marambaia": "5591981745677",
+    "Retirada no Local": "5591981745677",
+    "Ananideua / Br316": "5591981745677"
   }), []);
   
   const taxa = regiao ? taxas[regiao as TipoEntrega] ?? 0 : 0;
   const subtotal = items.reduce((t, i) => t + i.preco * i.quantidade, 0);
   const total = subtotal + taxa;
-  const chavePix = "ocoqueirobelem@exemplo.com";
-  const telEmpresa = regiao ? telefonesRegiao[regiao as TipoEntrega] : "5591982690087";
-  const pedidoMinimo = 20;
+  const chavePix = " 91981745677";
+  const telEmpresa = regiao ? telefonesRegiao[regiao as TipoEntrega] : "5591981745677";
+  const pedidoMinimo = 0;
   const atingiuMinimo = subtotal >= pedidoMinimo;
 
   useEffect(() => {
@@ -278,9 +290,15 @@ export default function Checkout() {
           >
             <option value="">Selecione o tipo de entrega</option>
             <option value="Retirada no Local">🏪 Retirada no Local (Grátis)</option>
-            <option value="Belém">🚚 Entrega em Belém (R$ 12,00)</option>
-            <option value="Ananindeua">🚚 Entrega em Ananindeua (R$ 14,00)</option>
-            <option value="Outras">🚚 Outras Regiões (R$ 20,00)</option>
+            <option value="Belém-Centro">🚚 Entrega em Belém-Centro (Grátis)</option>
+            <option value="Icoaraci/Augusto Montenegro">🚚 Entrega em Icoaraci / Augusto Montenegro (R$ 15,00)</option>
+            <option value="Marco">🚚 Entrega em Marco (R$ 10,00)</option>
+            <option value="Pedreira">🚚 Entrega em Pedreira (R$ 10,00)</option>
+            <option value="Telegrafo">🚚 Entrega em Telegrafo (R$ 10,00)</option>
+            <option value="Sacramenta">🚚 Entrega em Sacramenta (R$ 10,00)</option>
+            <option value="Souza">🚚 Entrega em Souza (R$ 10,00)</option>
+            <option value="Marambaia">🚚 Entrega em Marambaia (R$ 10,00)</option>
+            <option value="Ananideua">🚚 Entrega em Ananideua / BR 316 (R$ 20,00)</option>
           </select>
 
           {regiao === "Retirada no Local" && (
@@ -289,10 +307,10 @@ export default function Checkout() {
                 <Store className="text-emerald-600 mt-1" size={20} />
                 <div className="text-sm text-emerald-800">
                   <p className="font-semibold mb-1">📍 Endereço para Retirada:</p>
-                  <p>Rua Exemplo, 123 - Bairro Centro</p>
+                  <p>Rua Timbiras, 769 - Jurunas Centro</p>
                   <p>Belém - PA</p>
                   <p className="mt-2 text-emerald-600">
-                    ⏰ Horário: Segunda a Sábado, 8h às 18h
+                    ⏰ Horário: Segunda a Sábado, 10h às 20h
                   </p>
                 </div>
               </div>

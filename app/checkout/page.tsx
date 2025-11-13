@@ -67,7 +67,7 @@ export default function Checkout() {
   const taxa = regiao ? taxas[regiao as TipoEntrega] ?? 0 : 0;
   const subtotal = items.reduce((t, i) => t + i.preco * i.quantidade, 0);
   const total = subtotal + taxa;
-  const chavePix = " 91981745677";
+  const chavePix = "91981745677";
   const telEmpresa = regiao ? telefonesRegiao[regiao as TipoEntrega] : "559181745677";
   const pedidoMinimo = 0;
   const atingiuMinimo = subtotal >= pedidoMinimo;
@@ -130,84 +130,85 @@ export default function Checkout() {
       }
     }
 
-    // Construir mensagem sem encodeURIComponent dentro da string
-    let mensagemTexto = `*Pedido — O COQUEIRO BELÉM*\n`;
-    mensagemTexto += `*Nº:* #${pedido}\n\n`;
+    // Construir mensagem
+    let msg = `*Pedido - O COQUEIRO BELEM*\n`;
+    msg += `*No:* #${pedido}\n\n`;
     
-    mensagemTexto += `*📋 DADOS DO CLIENTE*\n`;
-    mensagemTexto += `*Nome:* ${dados.nome}\n`;
-    mensagemTexto += `*Telefone:* ${dados.telefone}\n`;
+    msg += `*DADOS DO CLIENTE*\n`;
+    msg += `*Nome:* ${dados.nome}\n`;
+    msg += `*Telefone:* ${dados.telefone}\n`;
     
     if (regiao === "Retirada no Local") {
-      mensagemTexto += `*Tipo:* 🏪 RETIRADA NO LOCAL\n`;
+      msg += `*Tipo:* RETIRADA NO LOCAL\n`;
     } else {
-      mensagemTexto += `*Endereço:* ${dados.endereco}\n`;
-      mensagemTexto += `*Região:* ${regiao}\n`;
+      msg += `*Endereco:* ${dados.endereco}\n`;
+      msg += `*Regiao:* ${regiao}\n`;
     }
     
     if (loc) {
-      mensagemTexto += `*Localização:* https://maps.google.com/?q=${loc.latitude},${loc.longitude}\n`;
+      msg += `*Localizacao:* https://maps.google.com/?q=${loc.latitude},${loc.longitude}\n`;
     }
     
-    mensagemTexto += `\n`;
+    msg += `\n`;
 
     // Agendamento
     if (agendar) {
-      mensagemTexto += `*📅 AGENDAMENTO*\n`;
+      msg += `*AGENDAMENTO*\n`;
       if (dataAgendada) {
         const dataFormatada = new Date(dataAgendada + "T00:00:00").toLocaleDateString("pt-BR");
-        mensagemTexto += `*Data:* ${dataFormatada}`;
+        msg += `*Data:* ${dataFormatada}`;
         if (horaAgendada) {
-          mensagemTexto += ` às ${horaAgendada}`;
+          msg += ` as ${horaAgendada}`;
         }
-        mensagemTexto += `\n`;
+        msg += `\n`;
       }
       if (diasSelecionados.length) {
-        mensagemTexto += `*Repetir em:* ${diasSelecionados.join(", ")}\n`;
+        msg += `*Repetir em:* ${diasSelecionados.join(", ")}\n`;
       }
-      mensagemTexto += `\n`;
+      msg += `\n`;
     }
 
     // Itens do pedido
-    mensagemTexto += `*🛒 ITENS DO PEDIDO*\n`;
+    msg += `*ITENS DO PEDIDO*\n`;
     items.forEach(item => {
       const totalItem = (item.preco * item.quantidade).toFixed(2);
-      mensagemTexto += `• ${item.nome} x${item.quantidade} - R$ ${totalItem}\n`;
+      msg += `${item.nome} x${item.quantidade} - R$ ${totalItem}\n`;
     });
     
-    mensagemTexto += `\n`;
+    msg += `\n`;
 
     // Valores
-    mensagemTexto += `*💰 VALORES*\n`;
-    mensagemTexto += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
+    msg += `*VALORES*\n`;
+    msg += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
     if (regiao === "Retirada no Local") {
-      mensagemTexto += `*Entrega:* RETIRADA NO LOCAL (R$ 0,00)\n`;
+      msg += `*Entrega:* RETIRADA NO LOCAL (R$ 0,00)\n`;
     } else {
-      mensagemTexto += `*Entrega:* R$ ${taxa.toFixed(2)}\n`;
+      msg += `*Entrega:* R$ ${taxa.toFixed(2)}\n`;
     }
-    mensagemTexto += `*TOTAL:* R$ ${total.toFixed(2)}\n`;
-    mensagemTexto += `\n`;
+    msg += `*TOTAL:* R$ ${total.toFixed(2)}\n`;
+    msg += `\n`;
 
     // Pagamento
-    mensagemTexto += `*💳 PAGAMENTO*\n`;
-    mensagemTexto += `*Forma:* ${metodo.toUpperCase()}\n`;
+    msg += `*PAGAMENTO*\n`;
+    msg += `*Forma:* ${metodo.toUpperCase()}\n`;
     if (metodo === "pix") {
-      mensagemTexto += `*Chave PIX:* ${chavePix}\n`;
+      msg += `*Chave PIX:* ${chavePix}\n`;
     }
-    mensagemTexto += `\n`;
+    msg += `\n`;
 
     // Observações
     if (dados.observacoes) {
-      mensagemTexto += `*📝 OBSERVAÇÕES*\n`;
-      mensagemTexto += `${dados.observacoes}\n`;
+      msg += `*OBSERVACOES*\n`;
+      msg += `${dados.observacoes}\n`;
     }
 
-    // Codificar a mensagem completa de uma vez
-    const mensagemCodificada = encodeURIComponent(mensagemTexto);
-    const link = `https://wa.me/${telEmpresa}?text=${mensagemCodificada}`;
+    // Codificar a mensagem
+    const msgCodificada = encodeURIComponent(msg);
+    const link = `https://wa.me/${telEmpresa}?text=${msgCodificada}`;
     
-    console.log("Mensagem:", mensagemTexto); // Para debug
-    console.log("Link:", link); // Para debug
+    console.log("Mensagem:", msg);
+    console.log("Telefone:", telEmpresa);
+    console.log("Link:", link);
     
     window.open(link, "_blank");
   };
@@ -298,7 +299,7 @@ export default function Checkout() {
             <option value="Sacramenta">🚚 Entrega em Sacramenta (R$ 10,00)</option>
             <option value="Souza">🚚 Entrega em Souza (R$ 10,00)</option>
             <option value="Marambaia">🚚 Entrega em Marambaia (R$ 10,00)</option>
-            <option value="Ananideua">🚚 Entrega em Ananideua / BR 316 (R$ 20,00)</option>
+            <option value="Ananideua / Br316">🚚 Entrega em Ananideua / BR 316 (R$ 20,00)</option>
           </select>
 
           {regiao === "Retirada no Local" && (

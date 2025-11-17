@@ -6,8 +6,17 @@ import { useState, useEffect, useCallback } from 'react';
 // ============================================
 const GOOGLE_SHEETS_API_KEY = 'AIzaSyDVgYZobP5Aa222GtfVL25bhgacNBiNYUE';
 const SPREADSHEET_ID = '1-63Zw_i7_ldl7rNXj2CBs70XtdRmdedDQUpdgUdV77w';
-const SHEET_RANGE = 'Sheet1!A:D'; // ID, Nome, Disponivel, Categoria
 const AUTO_RELOAD_INTERVAL = 2 * 60 * 1000; // 2 minutos
+
+// Tentar múltiplos nomes de abas
+const POSSIBLE_SHEET_NAMES = [
+  'Sheet1',
+  'Planilha1', 
+  'Página1',
+  'Aba1',
+  'Produtos',
+  'Estoque'
+];
 
 // ============================================
 // TIPOS
@@ -26,9 +35,6 @@ const ESTOQUE_FALLBACK: Record<number, boolean> = {
   // Varejo
   1: true,   // Água de Coco 300ml
   3: true,   // Água de Coco 1L
-  4: true,   // Coco Verde Inteiro
-  5: true,   // Coco Gelado (unidade)
-  6: true,   // Kit 6 Cocos Verdes
 
   // Atacado
   101: true, // Coco Verde (50un)
@@ -97,7 +103,7 @@ function processarLinhaProduto(linha: string[], index: number): ProdutoEstoque |
 
 function parseDisponibilidade(valor: string | undefined): boolean {
   if (!valor || valor === '') {
-    return true;
+    return true; // Vazio = disponível
   }
 
   const valorLower = valor.toLowerCase().trim();
@@ -113,31 +119,49 @@ async function buscarEstoqueDaPlanilha(): Promise<Record<number, boolean>> {
   try {
     console.log('[Estoque] 📄 Buscando estoque da planilha...');
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_RANGE}?key=${GOOGLE_SHEETS_API_KEY}`;
+    // Tentar cada nome de aba possível
+    let data = null;
+    let sheetNameUsed = '';
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-    });
+    for (const sheetName of POSSIBLE_SHEET_NAMES) {
+      try {
+        console.log(`[Estoque] 🔍 Tentando aba: "${sheetName}"...`);
+        
+        const range = `${sheetName}!A:D`;
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${GOOGLE_SHEETS_API_KEY}`;
 
-    console.log('[Estoque] 📡 Status:', response.status);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Estoque] ❌ Erro na API:', errorText);
-      throw new Error(`API Error: ${response.status}`);
+        if (response.ok) {
+          const responseData = await response.json();
+          
+          // Verificar se tem dados válidos
+          if (responseData.values && responseData.values.length > 1) {
+            data = responseData;
+            sheetNameUsed = sheetName;
+            console.log(`[Estoque] ✅ Aba encontrada: "${sheetName}"`);
+            break;
+          }
+        }
+      } catch (err) {
+        console.log(`[Estoque] ⚠️ Aba "${sheetName}" não encontrada, tentando próxima...`);
+        continue;
+      }
     }
 
-    const data = await response.json();
-
-    if (!data.values || data.values.length <= 1) {
-      throw new Error('Planilha vazia ou só com cabeçalho');
+    if (!data) {
+      throw new Error('Nenhuma aba válida encontrada. Verifique os nomes das abas na planilha.');
     }
+
+    console.log(`[Estoque] 📊 Usando aba: "${sheetNameUsed}"`);
 
     const [_cabecalho, ...linhas] = data.values;
-    console.log(`[Estoque] 📊 ${linhas.length} produtos na planilha`);
+    console.log(`[Estoque] 📊 ${linhas.length} linhas encontradas`);
 
-    // ✅ CORRIGIDO: Adicionar .filter() que estava faltando
+    // Processar produtos
     const produtos = linhas
       .map((linha: string[], index: number) =>
         processarLinhaProduto(linha, index)
@@ -296,19 +320,24 @@ export async function atualizarDisponibilidade(
   try {
     console.log(`[API] 📤 Atualizando produto ${produtoId} para ${disponivel ? 'disponível' : 'indisponível'}`);
 
-    // Mapear ID do produto para linha na planilha
+    // ✅ Mapear ID do produto para linha na planilha
     const mapIdParaLinha: Record<number, number> = {
-      1: 2,    // Água de Coco 300ml
-      3: 3,    // Água de Coco 1L
-      4: 4,    // Coco Verde Inteiro
-      5: 5,    // Coco Gelado
-      6: 6,    // Kit 6 Cocos
-      101: 7,  // Coco Verde 50un
-      102: 8,  // Caixa 300ml
-      103: 9,  // Caixa 1L
+      1: 2,    // Água de Coco 300ml → Linha 2
+      3: 3,    // Água de Coco 1L → Linha 3
+      101: 4,  // Coco Verde 50un → Linha 4
+      102: 5,  // Caixa Água de Coco 300ml (12un) → Linha 5
+      103: 6,  // Caixa Água de Coco 1L (6un) → Linha 6
     };
 
-    const linhaNaPlanilha = mapIdParaLinha[produtoId] || 2;
+    const linhaNaPlanilha = mapIdParaLinha[produtoId];
+
+    if (!linhaNaPlanilha) {
+      console.error(`[API] ❌ Produto ${produtoId} não encontrado no mapeamento`);
+      return {
+        success: false,
+        error: `Produto ${produtoId} não encontrado no mapeamento`
+      };
+    }
 
     const url = '/api/admin/atualizar-estoque';
     const body = {
@@ -400,28 +429,35 @@ export async function testarAPIEstoque() {
   try {
     console.log('🧪 TESTE MANUAL DA API - ESTOQUE');
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_RANGE}?key=${GOOGLE_SHEETS_API_KEY}`;
-    console.log('🔗 URL:', url);
+    // Tentar cada aba
+    for (const sheetName of POSSIBLE_SHEET_NAMES) {
+      const range = `${sheetName}!A:D`;
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${GOOGLE_SHEETS_API_KEY}`;
+      
+      console.log(`🔍 Tentando aba: "${sheetName}"`);
+      console.log('🔗 URL:', url);
 
-    const response = await fetch(url);
-    console.log('📡 Status:', response.status, response.statusText);
+      const response = await fetch(url);
+      console.log('📡 Status:', response.status, response.statusText);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erro:', errorText);
-      return { sucesso: false, erro: errorText };
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Dados recebidos da aba:', sheetName);
+        console.log('📊 Linhas:', data.values?.length || 0);
+
+        if (data.values && data.values.length > 1) {
+          console.log('📋 Cabeçalho:', data.values[0]);
+          console.log('📦 Primeiras 3 linhas:', data.values.slice(1, 4));
+          return { sucesso: true, dados: data, aba: sheetName };
+        }
+      } else {
+        const errorText = await response.text();
+        console.log(`⚠️ Aba "${sheetName}" - Erro:`, errorText);
+      }
     }
 
-    const data = await response.json();
-    console.log('✅ Dados recebidos:', data);
-    console.log('📊 Linhas:', data.values?.length || 0);
-
-    if (data.values && data.values.length > 1) {
-      console.log('📋 Cabeçalho:', data.values[0]);
-      console.log('📦 Primeiras linhas:', data.values.slice(1, 4));
-    }
-
-    return { sucesso: true, dados: data };
+    console.error('❌ Nenhuma aba válida encontrada');
+    return { sucesso: false, erro: 'Nenhuma aba válida encontrada' };
 
   } catch (err) {
     console.error('💥 Erro na requisição:', err);
